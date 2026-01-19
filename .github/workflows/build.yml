@@ -1,0 +1,49 @@
+name: Build games.json
+
+on:
+  push:
+    paths:
+      - "games/*.md"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Generate JSON
+        run: |
+          mkdir -p dist
+          node <<'EOF'
+          const fs = require("fs");
+          const path = require("path");
+
+          const gamesDir = "games";
+          const files = fs.readdirSync(gamesDir).filter(f => f.endsWith(".md"));
+          const allGames = [];
+
+          for (const file of files) {
+            const content = fs.readFileSync(path.join(gamesDir, file), "utf8");
+            const platformMatch = content.match(/^# (.+)/m);
+            const platform = platformMatch ? platformMatch[1].trim() : "Unknown";
+
+            content.split("\n")
+              .map(line => line.trim())
+              .filter(line => line && !line.startsWith("#"))
+              .forEach(title => {
+                allGames.push({ title, platform });
+              });
+          }
+
+          fs.writeFileSync("dist/games.json", JSON.stringify({
+            meta: { generatedAt: new Date().toISOString(), source: "trust me bro." },
+            games: allGames
+          }, null, 2));
+          EOF

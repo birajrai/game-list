@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Game List</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1e1e1e;
+      color: #f0f0f0;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 { text-align: center; }
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      justify-content: center;
+    }
+    .tab {
+      cursor: pointer;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      background: #2c2c2c;
+      transition: background 0.2s;
+    }
+    .tab.active {
+      background: #f05454;
+      font-weight: bold;
+    }
+    .game-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .game-list li {
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 My Game List</h1>
+
+  <div class="tabs" id="tabs"></div>
+  <ul id="gameList" class="game-list"></ul>
+
+  <script>
+    async function loadGames() {
+      const res = await fetch('dist/games.json');
+      const data = await res.json();
+
+      const tabsDiv = document.getElementById('tabs');
+      const gameList = document.getElementById('gameList');
+
+      // Group games by platform
+      const platforms = {};
+      data.games.forEach(g => {
+        if (!platforms[g.platform]) platforms[g.platform] = [];
+        platforms[g.platform].push(g.title);
+      });
+
+      let currentPlatform = Object.keys(platforms)[0];
+
+      function renderList(platform) {
+        gameList.innerHTML = '';
+        platforms[platform].forEach(title => {
+          const li = document.createElement('li');
+          li.textContent = title;
+          gameList.appendChild(li);
+        });
+      }
+
+      // Render tabs
+      for (const platform in platforms) {
+        const tab = document.createElement('div');
+        tab.className = 'tab';
+        tab.textContent = platform;
+        if (platform === currentPlatform) tab.classList.add('active');
+
+        tab.onclick = () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          renderList(platform);
+        };
+
+        tabsDiv.appendChild(tab);
+      }
+
+      // Initial render
+      renderList(currentPlatform);
+    }
+
+    loadGames();
+  </script>
+</body>
+</html>
